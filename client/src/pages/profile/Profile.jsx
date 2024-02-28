@@ -9,7 +9,7 @@ import LanguageIcon from "@mui/icons-material/Language";
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import Posts from "../../components/posts/Posts";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { makeRequest } from "../../axios";
 import { useLocation } from "react-router-dom";
 import { AuthContext } from "../../context/authContext";
@@ -29,6 +29,30 @@ const Profile = () => {
         return res.data;
       }),
   });
+
+  const { data: relationshipData } = useQuery({
+    queryKey: ["relationship"],
+    queryFn: () =>
+      makeRequest.get("/relationships?followedUserId=" + userId).then((res) => {
+        console.log(res.data);
+        return res.data;
+      }),
+  });
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: (following) => {
+      if (following) return makeRequest.delete("/relationships?userId=" + userId);
+      return makeRequest.post("/relationships", { userId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["relationship"] });
+    },
+  });
+
+  const handleFollow = () => {
+    mutation.mutate(relationshipData.includes(currentUser.id));
+  };
 
   return (
     <div className="profile">
@@ -71,14 +95,20 @@ const Profile = () => {
                     <span>{data?.website}</span>
                   </div>
                 </div>
-                {userId === currentUser.id ? <button>update</button> : <button>follow</button>}
+                {userId === currentUser.id ? (
+                  <button>update</button>
+                ) : (
+                  <button onClick={handleFollow}>
+                    {relationshipData?.includes(currentUser.id) ? "following" : "follow"}
+                  </button>
+                )}
               </div>
               <div className="right">
                 <EmailOutlinedIcon />
                 <MoreVertIcon />
               </div>
             </div>
-            <Posts />
+            <Posts userId={userId} />
           </div>
         </>
       )}
