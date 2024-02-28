@@ -13,12 +13,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { makeRequest } from "../../axios";
 import { useLocation } from "react-router-dom";
 import { AuthContext } from "../../context/authContext";
-import { useContext } from "react";
+import { useContext, useState } from "react";
+import Update from "../../components/update/Update";
 
 const Profile = () => {
   const { currentUser } = useContext(AuthContext);
+  const [openUpdate, setOpenUpdate] = useState(false);
 
-  console.log(currentUser.id);
   const userId = parseInt(useLocation().pathname.split("/")[2]);
 
   const { isLoading, error, data } = useQuery({
@@ -30,7 +31,7 @@ const Profile = () => {
       }),
   });
 
-  const { data: relationshipData } = useQuery({
+  const { isLoading: rIsLoading, data: relationshipData } = useQuery({
     queryKey: ["relationship"],
     queryFn: () =>
       makeRequest.get("/relationships?followedUserId=" + userId).then((res) => {
@@ -61,8 +62,8 @@ const Profile = () => {
       ) : (
         <>
           <div className="images">
-            <img src={data?.coverPic} alt="" className="cover" />
-            <img src={data?.profilePic} alt="" className="profilePic" />
+            <img src={"/upload/" + data?.coverPic} alt="" className="cover" />
+            <img src={"/upload/" + data?.profilePic} alt="" className="profilePic" />
           </div>
           <div className="profileContainer">
             <div className="uInfo">
@@ -95,8 +96,10 @@ const Profile = () => {
                     <span>{data?.website}</span>
                   </div>
                 </div>
-                {userId === currentUser.id ? (
-                  <button>update</button>
+                {rIsLoading ? (
+                  "loading..."
+                ) : userId === currentUser.id ? (
+                  <button onClick={() => setOpenUpdate(true)}>update</button>
                 ) : (
                   <button onClick={handleFollow}>
                     {relationshipData?.includes(currentUser.id) ? "following" : "follow"}
@@ -112,6 +115,7 @@ const Profile = () => {
           </div>
         </>
       )}
+      {openUpdate && <Update setOpenUpdate={setOpenUpdate} user={data} />}
     </div>
   );
 };
