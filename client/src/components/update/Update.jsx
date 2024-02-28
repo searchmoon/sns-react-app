@@ -49,7 +49,6 @@ const Update = ({ setOpenUpdate, user }) => {
 
     mutation.mutate({ ...texts, coverPic: coverUrl, profilePic: profileUrl });
     setOpenUpdate(false);
-    
   };
 
   return (
